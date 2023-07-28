@@ -118,8 +118,9 @@
     font-size: 20px;
 }
 
-#chat-icon:hover {
+#send-button:hover:enabled {
     opacity: .7;
+    cursor: pointer;
 }
 
 /* Chat bubbles */

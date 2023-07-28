@@ -149,11 +149,16 @@ function getBotResponse(userText) {
 	if (response.type === "input") {
 		expect_input = response.input;
 		document.getElementById("textInput").disabled = false;
+		document.getElementById("textInput").focus();
+		document.getElementById("send-button").disabled = false;
 	} else if (response.responses) {
 		createResponses(response.responses);
 		document.getElementById("textInput").disabled = true;
+		document.getElementById("send-button").disabled = true;
 	} else {
-		sendBotMessage(RESPONSES["end"].message);
+		setTimeout(() => {
+			sendBotMessage(RESPONSES["end"].message);
+		}, 1000);
 	}
 }
 
