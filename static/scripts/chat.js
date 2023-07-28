@@ -40,30 +40,14 @@ function main() {
 
 // Gets the first message
 function firstBotMessage() {
-	const firstMessage = RESPONSES["starter"]["message"];
+	const firstMessage = RESPONSES["start"]["message"];
 	const starter = document.createElement("p");
 	starter.className = "botText";
 	starter.innerHTML = `<span>${firstMessage}</span>`;
 	$("#chatbox").append(starter);
-	createResponses(RESPONSES["starter"]["responses"]);
+	createResponses(RESPONSES["start"]["responses"]);
 }
 
-// Retrieves the response
-function sendBotResponse(userText) {
-	let response_text;
-
-	const botHtml = `<p class="botText"><span>${response_text}</span></p>`;
-	$("#chatbox").append(botHtml);
-
-	if (RESPONSES[userText]["responses"]) {
-		createResponses(RESPONSES[userText]["responses"]);
-	} else {
-		const input = document.getQuerySelector("#textInput");
-		input.disabled = false;
-	}
-
-	document.getElementById("chat-bar-bottom").scrollIntoView(true);
-}
 // Gets the text text from the input box and processes it
 function sendResponse(userText) {
 	if (userText.trim() === "") {
@@ -79,23 +63,9 @@ function sendResponse(userText) {
 	input.disabled = true;
 
 	setTimeout(() => {
-		sendBotResponse(userText);
+		getBotResponse(userText);
 	}, 1000);
 }
-
-// Handles sending text via button clicks
-// function buttonSendText(sampleText) {
-// 	const userHtml = `<p class="userText"><span>${sampleText}</span></p>`;
-
-// 	$("#textInput").val("");
-// 	$("#chatbox").append(userHtml);
-// 	document.getElementById("chat-bar-bottom").scrollIntoView(true);
-
-// 	//Uncomment this if you want the bot to respond to this buttonSendText event
-// 	// setTimeout(() => {
-// 	//     sendBotResponse(sampleText);
-// 	// }, 1000)
-// }
 
 // Handle button press on chat bar
 function sendButton() {
@@ -114,6 +84,7 @@ function createResponses(responseList) {
 		buttonContainer.appendChild(button);
 	});
 	$("#chatbox").append(buttonContainer);
+	document.getElementById("chat-bar-bottom").scrollIntoView(true);
 	responseButtonEvents();
 }
 
@@ -151,35 +122,77 @@ function resetChat() {
 	firstBotMessage();
 }
 
-main();
+// Sends specified text as bot
+function sendBotMessage(text) {
+	const botHtml = `<p class="botText"><span>${text}</span></p>`;
+	$("#chatbox").append(botHtml);
+	document.getElementById("chat-bar-bottom").scrollIntoView(true);
+}
+
+// Retrieves the response
+function getBotResponse(userText) {
+	let response;
+	if (expect_input) {
+		user_inputs[expect_input] = userText;
+		response = RESPONSES[expect_input];
+		const response_text = response.message.replace(
+			`{${expect_input}}`,
+			userText,
+		);
+		expect_input = null;
+		sendBotMessage(response_text);
+	} else {
+		response = RESPONSES[userText];
+		sendBotMessage(response.message);
+	}
+
+	if (response.type === "input") {
+		expect_input = response.input;
+		document.getElementById("textInput").disabled = false;
+	} else if (response.responses) {
+		createResponses(response.responses);
+		document.getElementById("textInput").disabled = true;
+	} else {
+		sendBotMessage(RESPONSES["end"].message);
+	}
+}
 
 // CHATBOT RESPONSE HANDLER
 
+let expect_input = null;
+const user_inputs = {};
+
 const RESPONSES = {
-	starter: {
+	start: {
 		message: "How can I help you virtually?",
 		responses: ["Get in touch", "Available programmes"],
 	},
 	"Get in touch": {
 		message: "Could you tell me your name first?",
 		type: "input",
-		expect: "nameEntry",
-		response_text: "How would you like to be contacted, {name}?",
-		response_options: ["Phone", "Email"],
+		input: "nameEntry",
+	},
+	nameEntry: {
+		message: "How would you like to be contacted, {nameEntry}?",
+		responses: ["Phone", "Email"],
 	},
 	Phone: {
 		message: "What is your phone number?",
 		type: "input",
-		input: "phone",
-		response: "Alright, I will get in touch with you at {phone}.",
-		end: true,
+		input: "phoneEntry",
+	},
+	phoneEntry: {
+		message: "Alright, I will get in touch with you at {phoneEntry}.",
+		type: "end",
 	},
 	Email: {
 		message: "What is your email address?",
 		type: "input",
-		input: "email",
-		response: "Alright, I will get in touch with you at {email}.",
-		end: true,
+		input: "emailEntry",
+	},
+	emailEntry: {
+		message: "Alright, I will get in touch with you at {emailEntry}.",
+		type: "end",
 	},
 	"Available programmes": {
 		message:
@@ -189,17 +202,10 @@ const RESPONSES = {
 	Corporate: {
 		message: "Great. Here's a few options for you",
 		responses: ["Leadership Training", "Sales & Negotiation"],
-		end: false,
+	},
+	end: {
+		message: "Live with spirit!",
 	},
 };
 
-const user_inputs = {};
-let expect_input;
-
-function getResponse(message) {
-	if (expect_input) {
-		user_inputs[expect_input] = userText;
-	}
-
-	const botResponse = RESPONSES[userText];
-}
+main();
